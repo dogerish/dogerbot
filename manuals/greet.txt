@@ -1,0 +1,6 @@
+Greets you or the person or people. Usage: `greet [<person>...]`
+`greet` simply replaces `there` (which is the default with no input given) with all of the input, so format it the way you want (@mentions and #channel references still work).
+Example:
+```
+greet {user} and dogerish
+```

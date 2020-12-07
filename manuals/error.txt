@@ -1,0 +1,5 @@
+Creates an error which will put message in the logs in bold red text. This is for root users only, but it's kind of pointless anyway. Usage: `error <message...>`
+Example:
+```
+error {user} is too cool
+```

@@ -1,0 +1,7 @@
+Report a bug. There is a 60 second cooldown after every use. Usage: `bugreport <issue>...`
+All line breaks and attachments will be kept but any other formatting is lost, so don't worry too much about it.
+Example:
+```
+bugreport Missing manual page for the help command!
+Continuing to the next line also works.
+```

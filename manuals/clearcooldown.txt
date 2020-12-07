@@ -1,0 +1,6 @@
+Clears the cooldown for command or all commands for user(s) or all users. This command is only allowed for `root users`. Usage: `clearcooldown [<command>] [<user(s)>...]`
+User argument can be @mentions or IDs
+Example:
+```
+clearcooldown bugreport
+```

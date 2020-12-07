@@ -1,0 +1,21 @@
+Generates and sends a fractal tree with the given arguments. Usage: `fractal-tree [<options...>] [<color>] [<background color>] [<angle increment>] [<length increment>] [<number of branch splits>] [<resolution>] [<initial length>]`
+Arguments:
+	**color**: the color of the branches, as hex 0xRRGGBB (default purple (0x8000FF))
+	**background color**: the color of the background, as hex 0xRRGGBB (default black)
+	**angle increment**: the angle, in degrees, to add/subtract for each branch split (default is 30)
+	**length increment**: the ratio of the length of the next branch to the length of the first branch (as a decimal) (default is 0.75)
+		**example**: 0.75
+			as a ratio, this is 3:4 - the next branch is 3/4 the length of the one it originated from/is attached to
+	**number of branch splits**: the number of times for a branch to split into 2 more branches, or the depth of the recursion. (default is 15, max is 17)
+	**resolution**: follows the syntax `WIDTHxHEIGHT`, where WIDTH is the starting width of the canvas and HEIGHT is the height. (default: 1000)
+		**Alternate syntaxes**:
+			**WIDTH or WIDTHx-**: if the angle increment, number of branch splits, and length increment are all default, this will make the final result have a width of WIDTH pixels. "-" can be replaced with any default indicator
+			**-xHEIGHT**: same as above, but for height
+			**-x-**: uses default
+	**initial length**: The length (in pixels) of the initial/first branch / trunk of the tree. (default with both width and height specified is 200, but with only one or none specified, it is WIDTH over 4.8)
+Since all these arguments are optional, if you don't want to specify one of them, just use a default indicator, aka a blank-representative thing (-, None, '', ' ', N/A, n/a, or /)
+
+Example:
+```
+fractal-tree - 0x001000
+```

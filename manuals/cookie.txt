@@ -1,0 +1,8 @@
+Gives you (or the specified user(s)) one cookie. Usage: `cookie [<options>...] [<user(s)>...]`.
+user(s) can be @mentions or IDs.
+You're welcome, subbed74. <3
+{options}
+Example:
+```
+cookie @{user}
+```

@@ -1,0 +1,10 @@
+Sets channel or current channel to be used or not used by the bot for the command. Usage: `set [<options>...] <command> <bool> <server> <channel>`.
+You must have the `Manage Channels` permission to use this command.
+bool is the boolean value (1 or 0). 1 means that the channel will be used, 0 means that it won't be used.
+By default, server and channel are the server and channel of the message. server must be the server ID of the server that has the channel, and channel must be a channel ID.
+If nothing changes because the settings match, the bot will react with :ok_hand:. If the bot has enabled a channel, it will react with :white_check_mark:, otherwise it will react with :ballot_box_with_check:.
+{options}
+Example:
+```
+set cookie 1
+```

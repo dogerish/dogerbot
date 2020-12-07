@@ -1,0 +1,5 @@
+Displays info about a command, or lists all the commands. Usage: `help [<command>]` or `help`.
+Example:
+```
+help help
+```

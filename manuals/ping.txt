@@ -1,0 +1,1 @@
+Responds with pong and the delay between message created and message recieved (in milliseconds). Intended for testing purposes, or simple entertainment. Usage: `ping`

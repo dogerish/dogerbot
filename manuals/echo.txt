@@ -1,0 +1,6 @@
+Echo all of the input after the command, or blank space if no input is given. Usage: `echo <input>...`
+The input is duplicated exactly, meaning that @mentions will also work (but they will be pinged twice), as will #channel references
+Example:
+```
+echo example of the `echo` command to show {user} that there is no limit to input length other than Discord's character limit.
+```

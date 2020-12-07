@@ -1,0 +1,1 @@
+Tell the bot to save the configuration and go offline. This command is only available for `root users`, if you don't know what that is, then you are most likely not one of them. Usage: `quit`

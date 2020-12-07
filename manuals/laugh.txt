@@ -1,0 +1,6 @@
+Tells you or the subject(s) that you/they are funny and laughs. Usage: `laugh [<subject>...]`
+All @mentions are converted to usernames so that there aren't so many pings and it just looks better idk.
+Example:
+```
+laugh @{user}
+```

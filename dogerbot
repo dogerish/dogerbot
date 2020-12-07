@@ -1,0 +1,10 @@
+#! /bin/bash
+
+# bash script to run dogerbot and put errors into the log file.
+# Optional first argument is where the files are located.
+
+if [ "$1" != '' ]
+then
+	cd "$1"
+fi
+node dogerbot.js &>> log/dogerlog.less &

@@ -1,0 +1,6 @@
+Display the manual page for a certain command. Usage: `manual <command>`
+{options}
+Example:
+```
+manual help
+```

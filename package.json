@@ -1,0 +1,28 @@
+{
+  "name": "dogerbot",
+  "version": "1.0.0",
+  "description": "discord bot named dogerbot, cared for by dogerish.",
+  "main": "dogerbot.js",
+  "dependencies": {
+    "discord.js": "^12.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo DOGErbot"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dogerish/dogerbot.git"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "doge"
+  ],
+  "author": "dogerish",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dogerish/dogerbot/issues"
+  },
+  "homepage": "https://github.com/dogerish/dogerbot#readme"
+}

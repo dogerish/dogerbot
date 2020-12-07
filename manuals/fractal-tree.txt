@@ -1,0 +1,8 @@
+Generates and sends a fractal tree with the given arguments. Usage: `fractal-tree [<options...>] [<color>] [<background color>] [<angle increment>] [<length increment>] [<number of branch splits>] [<resolution>] [<initial length>]`
+{options}
+{args}
+Since all these arguments/options are optional, if you don't want to specify one of them, just use a default indicator, aka a blank-representative thing (-, None, '', ' ', N/A, n/a, or /)
+Example:
+```
+fractal-tree - 0x001000
+```

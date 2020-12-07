@@ -1,0 +1,1 @@
+Saves the configuration (blacklist and such) - otherwise done on `quit`. Usage: `save`
