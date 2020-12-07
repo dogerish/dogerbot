@@ -1,4 +1,4 @@
-config/*
-log/*
+config/*.json*
+log/*.less*
 etc/
 upload
