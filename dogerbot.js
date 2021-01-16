@@ -1,161 +1,45 @@
-// checks that arg is neither undefined nor null
-function exists(arg) { return !(arg === undefined || arg === null); }
-/*
-Exit Numbers: 
-	 0 : OK
-	 1 : Error
-	-1 : Unknown Error
-*/
-// blank exit codes
-const excd =
-{
-	'cs':
-	{
-		 '0': { 'num':  0 },
-		 '1': { 'num':  1 },
-		'-1': { 'num': -1 },
-	},
-	'vf': function(exitcode) { return !exitcode.num; },
-	'time': function (outstyle, spacer)
-	{
-		const now = new Date(Date.now());
-		return `\x1b[44m[${now.toLocaleString()}]\x1b[${outstyle || "0"}m${spacer || '\t'}`;
-	},
-	'stdout': function (log) { console.log(excd.time() + log); },
-	'stderr': function (error) { console.error(excd.time("\x1b[0;1;31") + error + "\x1b[0m"); },
-	'ifexists': function (error) { if (exists(error)) excd.stderr(error); }
-};
-class Exitcode
-{
-	constructor(value, num, code)
-	{
-		this.value = value;
-		this.num = num;
-		this.code = code;
-		this.xdata = Array.from(arguments).slice(3);
-	}
-	verify() { return excd.vf(this); }
-}
 // modules
 const sys = require('child_process');
 const fs = require('fs');
 const Discord = require('discord.js');
+
+const excd = require("./excd.js");
+const basics = require("./basic-fns.js");
+const uppers = require("./upper-fns.js");
+
+// bot config
 const config = require('./config/config.json');
+// bot users config
 const usersConfig = require('./config/users-config.json');
-const bot = new Discord.Client();
-// makes it possible to pass arguments to constructors
-function objapply(Obj, args)
-{
-	const boundObj = Obj.bind.apply(Obj, [null].concat(args))
-	return new boundObj();
-}
-function remove(array, element) { element = array.indexOf(element); return array.slice(null, element).concat(array.slice(element+1)); }
-function nameof(obj) { return (obj) ? obj.name : obj }
-// lists out elements in format: <str><e1><str>, <str><e2><str>...
-function listout(arr, str) { str = str || '`'; return str + arr.join(str + ', ' + str) + str; }
-var admin;
+
 // shortcuts to permission codes
-const Perms = { 'admin': 'ADMINISTRATOR', 'manchan': 'MANAGE_CHANNELS', 'roles': 'MANAGE_ROLES', }
-// dictionary of code to human readable
-const Special = { 'ADMINISTRATOR': 'Administrator', 'MANAGE_CHANNELS': 'Manage Channels', 'MANAGE_ROLES': 'Manage Roles', };
-// converts a channel/user/role mention into a Snowflake
-function tosnow(str) { if (!str) { return str; } str = str.match(/([0-9]+)/); return (str) ? str[0] : str; }
-// returns arg
-function echo(arg) { return arg; }
-// if below 0, is 0
-function flat0(num) { return (num >= 0)*num; }
-// logs arg and then returns it
-function logecho(arg) { excd.stdout(arg); return arg; }
-// mass and gate
-function all(arr) { return arr.every(echo); }
-// mass or gate
-function any(arr) { return arr.some(echo); }
-// chooses a random item out of the array
-Array.prototype.random = function () { return this[Math.floor(Math.random()*this.length)]; }
-// puts leading zeros if the number doesn't have enough digits
-function zeros(num, digits)
+const Perms = require("./perms.json");
+usersConfig.save = () =>
 {
-	if (!exists(digits) || digits <= 0 || !exists(num)) { return String(num); }
-	num = String(num);
-	return '0'.repeat(flat0(digits - num.length)) + num;
-}
-// zeros but for all args
-function zeroall(digits)
-{
-	var out = [];
-	Array.from(arguments).slice(1).forEach(item => out.push(zeros(item, digits)));
-	return out;
-}
-// checks if the instance is derived from the Object
-function sametype(inst, Obj) { return (exists(inst)) ? inst.constructor === Obj || inst === Obj : inst; }
-// raises custom type error
-function MyTypeError(want, got) { return TypeError(`Wanted ${want} but got ${got.constructor} instead`); }
-// combines the above 2 functions, returns true if things are good
-function typecheck(want, got) { var bool = sametype(got, want); if (!bool) { MyTypeError(want, got); return excd.cs[1]; } return excd.cs[0]; }
-// converts argument into array form if it isn't
-function getarray(arg, arrfrom) {
-	if (arrfrom) { arg = Array.from(arg); }
-	switch (arg.constructor)
-	{
-		case Array: return new Exitcode(arg, 0); // Array is what we want
-		case String: return new Exitcode(arg.split(' '), 0); // turn into array
-		default: return typecheck(Array, arg); // throw my type error
-	}
-}
-
-const Errors = require('./errors.js')(excd, admin, exists, sametype, objapply, Exitcode);
-const Message = require('./message.js')(excd, config, echo, exists, sametype, Errors);
-const BotCommandOption = require('./bot-cmd-opt.js')(excd, getarray, Exitcode);
-const BotCommand = require('./bot-cmd.js')(excd, config, bot, Perms, Special, usersConfig, exists, sametype, typecheck, all, getarray, tosnow, Exitcode, Message, BotCommandOption);
-const ManualManager = require('./man-man.js')(fs, excd, exists, sametype, typecheck, listout, Exitcode, Message);
-const BotCommandManager = require('./bot-cmd-man.js')(fs, excd, config, bot, exists, sametype, typecheck, zeroall, objapply, Exitcode, Message, BotCommand, ManualManager);
-
-usersConfig.save = function()
-{
-	data = JSON.stringify(usersConfig);
-	var indent = 0;
-	function getindent() { return '\n' + '	'.repeat(indent); }
-	function evaluater(c, i)
-	{
-		if (c === '{' && data[i + 1] !== '}')
-		{
-			if (data[i - 1]) { data[i] = getindent() + '{'; }
-			indent++;
-			data[i] += getindent();
-		}
-		else if (c === '}' && data[i - 1] !== '{') { indent--; data[i] = getindent() + '}'; }
-		//  && !data[i - 1].endsWith('}')
-		else if (c === ',' && data[i - 1] !== '"') { data[i] += getindent(); }
-		else if (c === ':') { data[i] += ' '; }
-	}
-	function roundtwo(c, i)
-	{
-		if (c === '') { return; }
-		if (i !== 0 && c.endsWith('{') && (data[i + 2].endsWith('}') || data[i + 2].endsWith('},')))
-		{
-			data[i - 1] = data[i - 1] + `${data[i]} ${data[i + 1]} ${data[i + 2]}`.replace(/\t/g, '');
-			data[i] = ''; data[i + 1] = ''; data[i + 2] = '';
-		}
-	}
-	data = data.split('');
-	data.forEach(evaluater);
-	data = data.join('').split('\n');
-	data.forEach(roundtwo);
-	data = data.filter(item => item).join('\n');
-	fs.writeFile('config/users-config.json', data, excd.ifexists);
+	fs.writeFile
+	(
+		'config/users-config.json',
+		// pretty print config as string
+		JSON.stringify(usersConfig, null, 2),
+		// error if an error exists
+		excd.ifexists
+	);
 	return excd.cs[0];
 }
 // constructor(aliases, options, onCall, perms, needsGuild, cooldown, servers)
 
-const botcmds = new BotCommandManager();
-// all the commands
+// create bot instance
+const bot = new Discord.Client();
+// container for all the commands
+const BotCommandManager = require('./bot-cmd-man.js');
+const botcmds = new BotCommandManager(bot);
 
 // help command, displays brief info for syntax and aliases of a command
 botcmds.addnew('help h', null, function(me, context, msg, cmd)
 {
 	// if a command was specified, get the help text
 	if (cmd) { return botcmds.manman.helptext(cmd, context); }
-	return msg.reply('Also try: `help <command>`. Available commands: ' + listout(botcmds.listcmds(2).value));
+	return msg.reply('Also try: `help <command>`. Available commands: ' + basics.listout(botcmds.listcmds(2).value));
 });
 // manual command, displays much more detailed info about the command
 botcmds.addnew('manual man',
@@ -196,10 +80,15 @@ botcmds.addnew('laugh funny haha', null, function(me, context, msg)
 {
 	const responses = 
 	[
-		"HahahahA ur so funny {}!", "{} is HILARIOUS", "{} lmao", "lolz {}",
-		"im literally ded {}", "hey {}, u should consider stand up as a career!",
+		"HahahahA ur so funny {}!", 
+		"{} is HILARIOUS",
+		"{} lmao",
+		"lolz {}",
+		"im literally ded {}",
+		"hey {}, u should consider stand up as a career!",
 		"{}, thats the funniest thing ive ever seen in my life!",
-		"{}, im laughing so hard my stomach hurts!", "{} lol"
+		"{}, im laughing so hard my stomach hurts!",
+		"{} lol"
 	];
 	return msg.reply(responses.random().replace(/{}/g, msg.pingargstr || msg.msg.author.username), context);
 });
@@ -211,14 +100,14 @@ botcmds.addnew('bugreport bug uhoh', null, function(me, context, msg)
 		content: `thx for ur feedback ${msg.author.username}. i appreciate it`,
 		files: ["https://i.ytimg.com/vi/vdJF4Mt4l1Q/maxresdefault.jpg"]
 	}, context);
-	return admin.send(`${msg.author} (${msg.author.id}) gave a bug report:\n\`\`\`${msg.argstr}\`\`\``, msg.msg.attachments.array());
+	return bot.admin.send(`${msg.author} (${msg.author.id}) gave a bug report:\n\`\`\`${msg.argstr}\`\`\``, msg.msg.attachments.array());
 },
 null, false, 60);
 // clears the cooldown for someone
 botcmds.addnew('clearcooldown rmcd', null, function(me, context, msg, command)
 {
 	const rmcdargs = Array.from(arguments).slice(3);
-	if (!exists(command)) { botcmds.commands.forEach(function(cmd) { return cmd.rmcd(rmcdargs); }); return excd.cs[0]; }
+	if (!basics.exists(command)) { botcmds.commands.forEach(function(cmd) { return cmd.rmcd(rmcdargs); }); return excd.cs[0]; }
 	var err = botcmds.findcmd(command, msg, command)
 	if (excd.vf(err))
 	{
@@ -242,19 +131,22 @@ function(me, context, msg)
 	function gotit(s) { block = true; return msg.msg.react(s || '✅'); }
 	if (msg.getopt('blacklist').exists)
 	{
-		me.blacklist[msg.author.id] = true;
+		// add if it's not there
+		if (!me.blacklist.includes(msg.author.id))
+			me.blacklist.push(msg.author.id);
 		gotit();
 	}
 	else if (msg.getopt('whitelist').exists)
 	{
-		delete me.blacklist[msg.author.id]
+		// remove if it's there
+		if (me.blacklist.includes(msg.author.id))
+			me.blacklist.remove(msg.author.id);
 		gotit();
 	}
 	if (msg.getopt('list').exists)
-	{
-		if (me.blacklist[msg.author.id]) gotit('⬛'); // black square
-		else gotit('⬜'); // white square
-	}
+		// react with black or white square, respectively
+		gotit(me.blacklist.includes(msg.author.id) ? '⬛' : '⬜');
+
 	var silent = false;
 	if (msg.getopt('silent').exists) silent = true;
 	if (block && !msg.args.length) return excd.cs[0];
@@ -263,7 +155,7 @@ function(me, context, msg)
 	function sender(usr, func, i, fails, listed, dmsgd)
 	{
 		// if silent mode is on, the user is blacklisted or a bot, then list it and carry on - no DM
-		if (silent || me.blacklist[usr.id] || usr.bot)
+		if (silent || me.blacklist.includes(usr.id) || usr.bot)
 		{ return func(i + 1, fails, listed.concat([usr.username]), dmsgd); }
 		return usr.send(`**${msg.author.username}** sent you a cookie! :cookie:`)
 			.then( msg => func(i + 1, fails, listed, dmsgd.concat(usr.username)) )
@@ -275,69 +167,58 @@ function(me, context, msg)
 		if (i >= argcount)
 		{
 			const compmsg = (listed.length)
-				? `Cookies for ${listout(listed)}: ${'🍪'.repeat(listed.length)}`
+				? `Cookies for ${basics.listout(listed)}: ${'🍪'.repeat(listed.length)}`
 				: ''
 			if (fails.length)
-			{ return msg.reply(`${(compmsg) ? compmsg + '\n' : ''}Failed for ${listout(fails)}.`); }
+			{ return msg.reply(`${(compmsg) ? compmsg + '\n' : ''}Failed for ${basics.listout(fails)}.`); }
 			else if (compmsg) { msg.reply(compmsg); }
 			// if any DMs were sent, react with email
 			if (dmsgd.length) { msg.msg.react('📧'); }
 			return excd.cs[0];
 		}
-		return bot.users.fetch(tosnow(msg.args[i]))
+		return bot.users.fetch(uppers.tosnow(msg.args[i]))
 			.then(theuser => sender(theuser, sendcookie, i, fails, listed, dmsgd))
 			.catch(err =>
 			{
 				sendcookie(i + 1, fails.concat(`arg${i + 1}`), listed, dmsgd);
-				excd.stderr("context: sendcookie", "arg: " + msg.args[i], "error: ", err);
+				// excd.stderr("context: sendcookie", "arg: " + msg.args[i], "error: ", err);
 			});
 	}
 	return sendcookie(0, [], [], []);
 }, null, null, null, usersConfig.cookie.servers);
 cookie = botcmds.commands[botcmds.commands.length - 1];
-// import blacklist from users config file
-cookie.blacklist = usersConfig.cookie.blacklist;
+// import blacklist from users config file, default to empty array
+cookie.blacklist = usersConfig.cookie.blacklist || [];
 // Object.keys(usersConfig.cookie).forEach(key => { cookie[key] = usersConfig.cookie[key]; });
 // sets the channel to be used or not by the bot for a certain command
 botcmds.addnew('set', [["s status stat", false, "Reacts with :one: or :zero:, depending on the status of the arguments."]],
 function(me, context, msg, botcmd, bool, guild, channel)
 {
+	// no command given
+	if (!basics.exists(botcmd)) return msg.error.asreply('NO_COMMAND');
+
+	// turn command name into the BotCommand object
 	botcmd = botcmds.findcmd(botcmd, msg);
-	if (excd.vf(botcmd)) { botcmd = botcmd.value; }
-	else { return botcmd; }
-	bool = Boolean(Number(bool || 1));
+	if (excd.vf(botcmd)) botcmd = botcmd.value;
+	else return botcmd;
+
+	// default guild is the one in which the message was sent in
 	guild = guild || msg.guild.id;
-	channel = tosnow(channel) || msg.msg.channel.id;
-	const serv = botcmd.servers;
-	var boolarr = [exists(serv)];
-	boolarr.push(boolarr[0] ? exists(serv[guild]) : false);
-	boolarr.push(boolarr[1] ? serv[guild].includes(channel) : false);
-	const exist = all(boolarr);
-	const works = (!all(boolarr.slice(0, 2)) || boolarr[2]);
-	// react with 1 or 0, corresponding to bool
-	if (msg.getopt('status').exists) { msg.msg.react(works ? '1️⃣' : '0️⃣'); return excd.cs[0]; }
-	// add to server list
-	if (bool)
+	// default channel is current (convert to snowflake)
+	channel = channel ? uppers.tosnow(channel) : msg.msg.channel.id;
+
+	// give back status
+	if (msg.getopt('status').exists)
+		// react with a 1 if enabled, otherwise 0
+		msg.msg.react(botcmd.getRestriction(guild, channel) ? '1️⃣' : '0️⃣');
+	// set restriction
+	else
 	{
-		const serv = botcmd.servers;
-		if (!exists(serv)) { botcmd.servers = {}; }
-		if (!exists(serv[guild])) { botcmd.servers[guild] = []; }
-		if (!serv[guild].includes(channel)) { msg.msg.react('✅'); botcmd.servers[guild].push(channel); }
-		else { msg.msg.react('👌'); }
-		return excd.cs[0];
-	} else
-	{
-		const serv = botcmd.servers;
-		if (!exist) { msg.msg.react('👌'); return excd.cs[0]; }
-		else
-		{
-			botcmd.servers[guild] = botcmd.servers[guild].filter(item => (item !== channel));
-			// if it's empty now then delete it
-			if (!botcmd.servers[guild].length) { delete botcmd.servers[guild]; }
-			msg.msg.react('☑️');
-			return excd.cs[0];
-		}
+		// bool is inputted as string containing a number, default 1
+		botcmd.setRestriction(guild, channel, Number(bool || 1));
+		msg.msg.react(bool ? '✅' : '👌');
 	}
+	return excd.cs[0];
 }, { array: ['root', Perms.manchan] });
 
 botcmds.addnew("fractal-tree fractal tree ft tree",
@@ -390,7 +271,7 @@ bot.on('ready', async () => {
 	excd.stdout(`${bot.user.username} is ready for action!`); 
 	if (config.debug) { excd.stdout('</> Running in debug mode'); }
 	bot.user.setActivity(config.activity).catch(excd.stderr);
-	bot.users.fetch(config.rootusers[0]).then(user => admin = user).catch(excd.stderr);
+	bot.users.fetch(config.rootusers[0]).then(user => bot.admin = user).catch(excd.stderr);
 }, { array: ['root'] });
 
 bot.on('message', msg => botcmds.onmessage(msg));
