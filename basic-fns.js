@@ -4,10 +4,10 @@
 Array.prototype.random = function () { return this[Math.floor(Math.random()*this.length)]; };
 
 // removes the element from the array
-Array.prototype.remove = function (element) { return this.splice(this.indexOf(element), 1); }
+Array.prototype.remove = function (element) { return this.splice(this.indexOf(element), 1); };
 
 // checks that arg is neither undefined nor null
-exports.exists = arg => !(arg === undefined || arg === null)
+exports.exists = arg => !(arg === undefined || arg === null);
 
 // makes it possible to pass arguments to constructors
 exports.objapply = (Obj, args) =>
@@ -15,6 +15,10 @@ exports.objapply = (Obj, args) =>
 	const BoundObj = Obj.bind.apply(Obj, [null].concat(args));
 	return new BoundObj();
 };
+
+// return a duplicate of the object
+exports.objdupe = function (obj) { return JSON.parse(JSON.stringify(obj)); };
+
 
 // returns the objects name property if the obj evaluates to true
 exports.nameof = obj => obj ? obj.name : obj;

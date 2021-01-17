@@ -2,16 +2,20 @@
 
 const excd = require("./excd.js");
 
+// functions
 const basics = require("./basic-fns.js");
 const types = require("./type-fns.js");
 const uppers = require("./upper-fns.js");
 
+// config
 const config = require("./config/config.json");
 const usersConfig = require('./config/users-config.json');
 
+// data sets
 const Perms = require("./perms.json");
 const Special = require("./perms.json");
 
+// classes
 const Exitcode = require("./exitcode.js");
 const Message = require("./message.js");
 const BotCommandOption = require("./bot-cmd-opt.js");
@@ -21,39 +25,69 @@ class BotCommand
 	constructor(bot, aliases, options, onCall, perms, needsGuild, cooldown, servers)
 	{
 		this.bot = bot;
+		// link to this for use in other functions
 		const me = this;
+
+		// aliases
 		this.aliases = uppers.getarray(aliases);
-		this.excd = (excd.vf(this.aliases)) ? excd.cs[0] : this.aliases;
+		// my exitcode is inherited from the aliases result if it failed
+		this.excd = excd.vf(this.aliases) ? excd.cs[0] : this.aliases;
 		this.aliases = this.aliases.value;
-		// make duplicate of the template
-		if (!basics.exists(usersConfig[this.aliases[0]])) { usersConfig[this.aliases[0]] = JSON.parse(JSON.stringify(usersConfig.template)); }
+
+		// users config
+		// make duplicate of the template if it doesn't have a config
+		if (!basics.exists(usersConfig[this.aliases[0]])) 
+			usersConfig[this.aliases[0]] = usersConfig.template.dupe();
+		// link to my config
 		const myconf = usersConfig[this.aliases[0]];
-		Object.keys(myconf).forEach(key => { me[key] = myconf[key]; });
-		this.options = [];
-		this.optionAliases = [];
+		// inherit all the key-value pairs of the config to the "this" scope
+		Object.keys(myconf).forEach(key => me[key] = myconf[key]);
+
+		// options
+		this.options = []; this.optionAliases = [];
+		// add options if any were specified
 		if (basics.exists(options))
 		{
-			options.forEach(function(option)
+			options.forEach(option =>
 			{
-				option = new BotCommandOption(option[0], option[1], option[2]);
-				me.options.push(option);
-				me.optionAliases.push(option.aliases);
+				// convert to BotCommandOption object
+				option = basics.objapply(BotCommandOption, option);
+				me.options.push(option); me.optionAliases.push(option.aliases);
 			});
 		}
-		// follows the structure: { all: Boolean, strict: Boolean, array: Array of permissions }
-		this.perms = perms || { array: [] };
-		this.perms.array = uppers.getarray(this.perms.array); // make sure it's in array form
-		const vf = excd.vf(this.perms.array)
-		if (vf)
+
+		// permissions
+		/* follows the structure:
+		 * {
+		 * 	all: Boolean, // true if every permission is needed
+		 * 	strict: Boolean, // true if the admin should be notified of attempts
+		 * 	array: Array // array of permissions to be met
+		 * }
+		 */
+		if (perms)
 		{
-			this.perms.array = this.perms.array.value;
-			this.perms.array.forEach((perm, index) => this.perms.array[index] = Perms[perm] || perm);
+			// make sure it's in array form
+			perms.array = uppers.getarray(perms.array);
+			if (perms.array.verify())
+			{
+				this.excd = excd.cs[0]; // successful
+				// attempt to convert shortcuts to perm codes
+				perms.array = perms.array.value.map(p => Perms[p] || p);
+			}
+			else this.excd = perms.array; // fail, so inherit
+			this.perms = perms;
+		} else
+		{
+			this.perms = { array: [] };
+			this.excd = excd.cs[0];
 		}
-		this.excd = vf ? excd.cs[0] : this.perms.array;
-		// just make sure that it is a boolean type
-		this.needsGuild = Boolean(needsGuild);
+		debugger;
+
+		this.needsGuild = Boolean(needsGuild); // ensure boolean type
 		this.onCall = onCall;
-		if (basics.exists(cooldown)) {
+		if (basics.exists(cooldown))
+		{
+			// convert to millisecs
 			this.cooldown = cooldown*1000;
 			// holds users that need to cool down
 			this.cooler = {};
@@ -71,10 +105,12 @@ class BotCommand
 		args.forEach(function(user) { delete my.cooler[uppers.tosnow(user)]; });
 		return excd.cs[0];
 	}
+	// complete mess, will probably redo
 	// checks that the Message author and bot have necessary permissions
 	checkperms(msg, context)
 	{
-		if (!this.perms.array.length) { return true; } // if no perms specified, then just exit true
+		// if no perms specified, then just exit true
+		if (!this.perms.array.length) { return true; }
 		if (!excd.vf(types.typecheck(Message, msg))) { return false; }
 		var outcome = [this.perms.all];
 		for (var i = 0; i < this.perms.array.length; i++)
@@ -136,7 +172,6 @@ class BotCommand
 		const delGuild = enable == -1;
 		const disable = Number(!enable);
 		enable = Number(Boolean(enable));
-		debugger;
 		// delete the guild config if enable is -1 and the config exists
 		if (delGuild)
 		{
@@ -155,7 +190,6 @@ class BotCommand
 		else if (this.channelInList(disable, guild, channel))
 			this.servers[disable][guild].remove(channel);
 
-		debugger;
 		// add if not deleted and not already there
 		if (!delGuild && !this.channelInList(enable, guild, channel))
 			this.servers[enable][guild].push(channel);
@@ -164,7 +198,7 @@ class BotCommand
 	// returns true if this command works in the channel
 	getRestriction(guild, channel)
 	{
-		// true if on or (nothing on and not off)
+		// true if (on) or (nothing on and not off)
 		return (
 			this.channelInList(1, guild, channel) ||
 			!(
@@ -177,6 +211,7 @@ class BotCommand
 	// evaluates the command of a Message object
 	eval(msg, cmdman, context)
 	{
+		debugger;
 		// make sure that msg is a Message
 		if (!types.sametype(msg, Message)) { msg = new Message(this.bot, msg, cmdman, context); }
 		// if it is restricted to certain channels in this server
@@ -191,6 +226,7 @@ class BotCommand
 		const onCallReturn = this.onCall.apply(null, [this, context, msg].concat(msg.args));
 		if (excd.vf(onCallReturn))
 		{
+			// handle cooldown
 			if (basics.exists(this.cooler))
 			{
 				this.cooler[msg.author.id] = true;
@@ -198,18 +234,20 @@ class BotCommand
 				function create(cmdobj, cmdmsg) { return function() { delete cmdobj.cooler[cmdmsg.author.id]; }; }
 				setTimeout(create(this, msg), this.cooldown);
 			}
+			return new Exitcode(onCallReturn, 0);
 		}
-		else { return excd.cs[onCallReturn.num]; }
-		return new Exitcode(onCallReturn, 0);
+		// call failed, inherit number or -1
+		else return new Exitcode(onCallReturn, (onCallReturn || { num: -1 }).num);
 	} // end eval
 	// finds an option from an alias
 	findopt(alias)
 	{
-		for (var i = 0; i < this.options.length; i++)
-		{
+		// loop thru options to find match
+		for (let i = 0; i < this.options.length; i++)
 			if (this.options[i].matches(alias))
-			{ return new Exitcode(this.options[i], 0); }
-		}
+				// match found; return early
+				return new Exitcode(this.options[i], 0);
+		// didnt find a match
 		return excd.cs[1];
 	} // end findopt
 }; // end BotCommand
