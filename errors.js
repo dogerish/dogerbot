@@ -79,9 +79,9 @@ class Errors
 		// tell me about the incident if the error was a root required
 		if (err.code === 'ROOT_REQ') this.bot.admin.send(
 			`\`${this.msg.command}\` attempted by ${this.msg.author}`
-		);
+		).catch(excd.stderr);
 		err.value = this.msg.reply(`:x: \`${err.value.context}\`: ${err.value.string}`);
-		return err;
+		return excd.cs[1];
 	}
 
 	// handles the error and turns it into a reaction

@@ -37,7 +37,7 @@ class BotCommand
 		// users config
 		// make duplicate of the template if it doesn't have a config
 		if (!basics.exists(usersConfig[this.aliases[0]])) 
-			usersConfig[this.aliases[0]] = usersConfig.template.dupe();
+			usersConfig[this.aliases[0]] = basics.objdupe(usersConfig.template);
 		// link to my config
 		const myconf = usersConfig[this.aliases[0]];
 		// inherit all the key-value pairs of the config to the "this" scope
@@ -60,7 +60,6 @@ class BotCommand
 		/* follows the structure:
 		 * {
 		 * 	all: Boolean, // true if every permission is needed
-		 * 	strict: Boolean, // true if the admin should be notified of attempts
 		 * 	array: Array // array of permissions to be met
 		 * }
 		 */
@@ -81,7 +80,6 @@ class BotCommand
 			this.perms = { array: [] };
 			this.excd = excd.cs[0];
 		}
-		debugger;
 
 		this.needsGuild = Boolean(needsGuild); // ensure boolean type
 		this.onCall = onCall;
@@ -105,53 +103,54 @@ class BotCommand
 		args.forEach(function(user) { delete my.cooler[uppers.tosnow(user)]; });
 		return excd.cs[0];
 	}
-	// complete mess, will probably redo
 	// checks that the Message author and bot have necessary permissions
-	checkperms(msg, context)
+	async checkperms(msg, context)
 	{
-		// if no perms specified, then just exit true
-		if (!this.perms.array.length) { return true; }
-		if (!excd.vf(types.typecheck(Message, msg))) { return false; }
-		var outcome = [this.perms.all];
-		for (var i = 0; i < this.perms.array.length; i++)
+		// no perms to meet
+		if (!this.perms.array.length) return true;
+		// shortcut to guild
+		const guild = msg.msg.guild;
+		// bot as a guild member
+		const gb = guild ? await guild.members.fetch(this.bot.user) : null;
+		// collects the error code and permission when a perm isn't met
+		let error = [];
+		// returns the result of expression, and sets the error container if it's false
+		function r(exp, err, perm) { if (!exp) error = [err, perm]; return exp; }
+		// new version of Array.prototype.map to await the responses
+		async function mapper(arr, f)
 		{
-			var perm = this.perms.array[i];
-			if (perm === 'root')
-			{
-				const bools = [config.rootusers.includes(msg.author.id), true, perm]
-				if (this.perms.all && !bools[0]) { outcome = [false] + bools; break; }
-				// if strict is specified, must be for another thing so don't leave yet
-				if (!this.perms.all && !this.perms.strict && bools[0]) { outcome = [true] + bools; break; }
-				// if it hasn't done a break yet
-				outcome = [outcome[0]] + bools;
-				continue;
-			}
-			// if no guild, then not gonna work
-			if (!basics.exists(msg.guild)) { continue; }
-			// checks if user has the permission
-			var checkmember = function(user) { return msg.msg.guild.member(user).hasPermission(perm); };
-			const bools = [checkmember(msg.author), (!this.perms.strict || checkmember(this.bot.user)), perm];
-			const end = basics.all(bools.slice(0,2));
-			// if all perms required and this one wasn't met
-			if (this.perms.all && !end) { outcome = [false] + bools; break; }
-			// if not all perms req and this one was met
-			else if (!this.perms.all && end) { outcome = [true] + bools; break; }
-			// otherwise update the outcome
-			else { outcome = [outcome[0]] + bools; }
+			// output
+			let out = [];
+			// loop thru each part and add result of f
+			for (let part of arr) out.push(await f(part));
+			return out;
 		}
-		// if permission granted
-		if (outcome[0]) { return true; }
-		// if the author is missing permissions
-		else if (!outcome[1])
+		// array of permission test results
+		const bools = await mapper(this.perms.array, async perm =>
 		{
-			if (!basics.exists(outcome[3])) { msg.error.asreply('GUILD_REQ', context); }
-			else { msg.error.asreply( (outcome[3] === 'root') ? 'ROOT_REQ' : 'LACK_PERMS', context, Special[outcome[3]]); }
-			return false;
-		}
-		// if the bot is missing permissions
-		else if (!outcome[2]) { msg.error.asreply('I_LACK_PERMS', context, Special[outcome[3]]); return false; }
-		// this shouldn't ever be called
-		else { excd.stderr('bruh moment in BotCommand.checkperms'); return false; }
+			// need to be a root user
+			if (perm == "root")
+				 return r(config.rootusers.includes(msg.author.id), "ROOT_REQ", perm);
+			// other perms need a guild
+			else if (basics.exists(guild))
+				return (
+					// author has permission?
+					r(
+						(await guild.members.fetch(msg.author))
+							.hasPermission(perm),
+						"LACK_PERMS",
+						perm
+					) &&
+					// bot has permission?
+					r(gb.hasPermission(perm), "I_LACK_PERMS", perm)
+				);
+			// no guild available
+			else return r(false, "GUILD_REQ", perm);
+		});
+		const result = this.perms.all ? basics.all(bools) : basics.any(bools);
+		// send error if there was a denial
+		if (!result) await msg.error.asreply(error[0], context, Special[error[1]]);
+		return result;
 	} // end checkperms
 
 	// returns true if the guild config exists
@@ -209,21 +208,25 @@ class BotCommand
 	}
 
 	// evaluates the command of a Message object
-	eval(msg, cmdman, context)
+	async eval(msg, cmdman, context)
 	{
-		debugger;
 		// make sure that msg is a Message
 		if (!types.sametype(msg, Message)) { msg = new Message(this.bot, msg, cmdman, context); }
 		// if it is restricted to certain channels in this server
-		if (!this.getRestriction(msg.msg.guild.id, msg.msg.channel.id)) return msg.error.asreact('RESTRICTED', context);
+		if
+		(
+			basics.exists(msg.msg.guild) &&
+			!this.getRestriction(msg.msg.guild.id, msg.msg.channel.id)
+		)
+			return msg.error.asreact('RESTRICTED', context);
 		// make sure that the invoker is off of cooldown
 		if (basics.exists(this.cooler) && this.cooler[msg.author.id]) { return msg.error.asreply('COOLDOWN', context, this.cooldown / 1000); }
 		// if it needs to be in a guild and the guild isn't available, error
 		if (this.needsGuild && !basics.exists(msg.guild)) { return msg.error.asreply('GUILD_REQ', context); }
 		// make sure all other permissions are there
-		if (!this.checkperms(msg, context)) { return excd.cs[1]; }
+		if (!(await this.checkperms(msg, context))) { return excd.cs[1]; }
 		// now call onCall and pass in the message's argument list
-		const onCallReturn = this.onCall.apply(null, [this, context, msg].concat(msg.args));
+		const onCallReturn = await this.onCall.apply(null, [this, context, msg].concat(msg.args));
 		if (excd.vf(onCallReturn))
 		{
 			// handle cooldown

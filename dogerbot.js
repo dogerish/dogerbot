@@ -272,7 +272,7 @@ bot.on('ready', async () => {
 	if (config.debug) { excd.stdout('</> Running in debug mode'); }
 	bot.user.setActivity(config.activity).catch(excd.stderr);
 	bot.users.fetch(config.rootusers[0]).then(user => bot.admin = user).catch(excd.stderr);
-}, { array: ['root'] });
+});
 
 bot.on('message', msg => botcmds.onmessage(msg));
 

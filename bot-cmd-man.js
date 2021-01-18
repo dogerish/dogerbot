@@ -58,13 +58,10 @@ class BotCommandManager
 		return msg.error.asreply(err, context || alias);
 	} // end findcmd
 	// what to do when a message event occurs
-	onmessage(msg)
+	async onmessage(msg)
 	{
-		if (msg.channel.type === 'dm' && msg.author.id !== this.bot.user.id)
+		if (msg.channel.type == 'dm' && msg.author != this.bot.user)
 		{
-			// const date = msg.createdAt;
-			// const zerod = uppers.zeroall(2, date.getDate(), date.getMonth() + 1, date.getFullYear(), date.getHours(), date.getMinutes(), date.getSeconds());
-			// const datestr = `\x1b[44m[${zerod[0]}-${zerod[1]}-${zerod[2]} ${zerod[3]}:${zerod[4]}:${zerod[5]}]\x1b[0m`;
 			const tag = `\x1b[1;36m${msg.author.username}\x1b[35m#${msg.author.discriminator}`;
 			const string = `${tag} \x1b[0;1m(\x1b[0;32m${msg.author.id}\x1b[0;1m): \x1b[0m${msg.content}`;
 			excd.stdout(string);
@@ -73,13 +70,14 @@ class BotCommandManager
 		var context;
 		// if the message isn't addressed to bot, ignore it
 		if (msg.author.bot || !msg.content.startsWith(config.prefix)) { return excd.cs[0]; }
+		//msg.author.send(`${this.bot.user.id} ${msg.author.id}`);
 		msg = new Message(this.bot, msg, this, context);
 		if (config.debug && !( basics.exists(msg.guild) && config.debug_guilds.includes(msg.guild.id) ))
 		{ return msg.error.asreply('DEBUG_MODE', context); }
 		this.manman.msg = msg; // update the ManMan's msg variable
 		const cmd = msg.cmdexcd;
 		if (!excd.vf(cmd)) return cmd;
-		try { return cmd.value.eval(msg, this, context); }
+		try { return (await cmd.value.eval(msg, this, context)); }
 		catch (err) { return excd.stderr(err); }
 	}
 	// Returns an array of the commands

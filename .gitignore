@@ -2,3 +2,6 @@ config/*.json*
 log/*.less*
 etc/
 upload
+
+# npm
+node_modules/
