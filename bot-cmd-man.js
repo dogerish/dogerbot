@@ -65,7 +65,9 @@ class BotCommandManager
 			const tag = `\x1b[1;36m${msg.author.username}\x1b[35m#${msg.author.discriminator}`;
 			const string = `${tag} \x1b[0;1m(\x1b[0;32m${msg.author.id}\x1b[0;1m): \x1b[0m${msg.content}`;
 			excd.stdout(string);
-			fs.appendFile('log/dmlog.less', excd.time() + string + '\n', excd.ifexists);
+			// link to LOG_CONFIG
+			const lc = config.LOG_CONFIG;
+			fs.appendFile(`${lc.LOGDIR}/${lc.DM}`, `${excd.time()}${string}\n`, excd.ifexists);
 		}
 		var context;
 		// if the message isn't addressed to bot, ignore it

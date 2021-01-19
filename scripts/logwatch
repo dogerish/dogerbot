@@ -1,0 +1,31 @@
+#! /bin/bash
+# watches the log folder and uploads the file when it is modified
+
+if [ "$1" != "" ]; then cd "$1"; fi
+LOGDIR=`jq '.["LOG_CONFIG"]["LOGDIR"]' config/config.json -r`
+
+tmpfile="/tmp/skip"
+echo -n '' > "$tmpfile"
+function upload_it()
+{
+	file="$1"
+	# catch any soon-after modifications
+	sleep 5
+	# stop skipping this file now
+	sed -i "s:$file ::" "$tmpfile"
+	# conv to txt fmt
+	mkdir -p `echo "$file" | sed 's/\(.*\)\/.*/\1/'`
+	sed 's/\[^m]*m//g' "$file" > "/tmp/$file.txt"
+	# upload
+	echo "Uploading $file"
+	rclone copy "/tmp/$file.txt" "gdrive:$LOGDIR"
+}
+
+inotifywait -rme modify "$LOGDIR" --format "%w%f" | while read file
+do
+	if [[ `cat "$tmpfile"` != *"$file"* ]]
+	then
+		upload_it "$file" &
+		echo -n "$file " >> "$tmpfile"
+	fi
+done

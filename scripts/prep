@@ -1,0 +1,5 @@
+#! /bin/bash
+# makes txt versions of the logs
+DIR=`jq '.["LOG_CONFIG"]["LOGDIR"]' -r config/config.json`
+mkdir -p "/tmp/$DIR"
+find "$DIR" -type f -exec sh -c "sed 's/\[^m]*m//g' {} > /tmp/{}.txt" \;

@@ -1,0 +1,23 @@
+#! /bin/bash
+# starts the bot
+
+if [ "$1" != "" ]; then cd "$1"; fi
+
+LOG_CONFIG=`jq '.["LOG_CONFIG"]' config/config.json -cM`
+for var in LOGDIR LOG ERR DM
+do
+	val=`echo $LOG_CONFIG | jq '.["'"$var"'"]' -r`
+	if [ "$var" != "LOGDIR" ]; then declare "$var=$LOGDIR/$val"
+	else declare "$var=$val"; fi
+done
+
+pwd && sleep 5 # print current directory and give user chance to abort if in wrong dir
+
+mkdir -p "$LOGDIR" # make log dir
+# add date to logs
+echo "
+----- `date` -----
+" | tee -a "$LOG" "$ERR" "$DM"
+
+# stdout appends to LOG, stderr appends to ERR
+node main.js >> "$LOG" 2>> "$ERR" &
