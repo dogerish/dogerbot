@@ -106,7 +106,7 @@ null, false, 60);
 // clears the cooldown for someone
 botcmds.addnew('clearcooldown rmcd', null, function(me, context, msg, command)
 {
-	const rmcdargs = Array.from(arguments).slice(3);
+	const rmcdargs = Array.from(arguments).slice(4);
 	if (!basics.exists(command)) { botcmds.commands.forEach(function(cmd) { return cmd.rmcd(rmcdargs); }); return excd.cs[0]; }
 	var err = botcmds.findcmd(command, msg, command)
 	if (excd.vf(err))

@@ -88,20 +88,23 @@ class BotCommand
 			// convert to millisecs
 			this.cooldown = cooldown*1000;
 			// holds users that need to cool down
-			this.cooler = {};
+			this.cooler = [];
 		}
 	} // end constructor
 
 	// clear the user from the cooler
 	rmcd(args)
 	{
-		if (!this.cooler) { return excd.cs[1]; }
+		// no cooldown for this command
+		if (!basics.exists(this.cooler)) return excd.cs[1];
 		// if no arguments given, then clear everyone
-		if (!args) { this.cooler = {}; return excd.cs[0]; }
-		// delete each user from the cooler
-		const my = this;
-		args.forEach(function(user) { delete my.cooler[uppers.tosnow(user)]; });
-		return excd.cs[0];
+		else if (!args.length) { this.cooler = []; return excd.cs[0]; }
+		else
+		{
+			// remove each user from the cooler
+			args.forEach(user => this.cooler.remove(uppers.tosnow(user)));
+			return excd.cs[0];
+		}
 	}
 	// checks that the Message author and bot have necessary permissions
 	async checkperms(msg, context)
@@ -220,7 +223,8 @@ class BotCommand
 		)
 			return msg.error.asreact('RESTRICTED', context);
 		// make sure that the invoker is off of cooldown
-		if (basics.exists(this.cooler) && this.cooler[msg.author.id]) { return msg.error.asreply('COOLDOWN', context, this.cooldown / 1000); }
+		if (basics.exists(this.cooler) && this.cooler.includes(msg.author.id))
+			return msg.error.asreply('COOLDOWN', context, this.cooldown / 1000);
 		// if it needs to be in a guild and the guild isn't available, error
 		if (this.needsGuild && !basics.exists(msg.guild)) { return msg.error.asreply('GUILD_REQ', context); }
 		// make sure all other permissions are there
@@ -232,10 +236,12 @@ class BotCommand
 			// handle cooldown
 			if (basics.exists(this.cooler))
 			{
-				this.cooler[msg.author.id] = true;
+				// put them in the cooler
+				this.cooler.push(msg.author.id);
 				// creates cooldown function
 				function create(cmdobj, cmdmsg) { return function() { delete cmdobj.cooler[cmdmsg.author.id]; }; }
-				setTimeout(create(this, msg), this.cooldown);
+				// take them back out after the time has elapsed
+				setTimeout(() => this.cooler.remove(msg.author.id), this.cooldown);
 			}
 			return new Exitcode(onCallReturn, 0);
 		}

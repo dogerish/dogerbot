@@ -4,7 +4,11 @@
 Array.prototype.random = function () { return this[Math.floor(Math.random()*this.length)]; };
 
 // removes the element from the array
-Array.prototype.remove = function (element) { return this.splice(this.indexOf(element), 1); };
+Array.prototype.remove = function (element)
+{
+	const index = this.indexOf(element);
+	return (index != -1) ? this.splice(index, 1) : [];
+};
 
 // checks that arg is neither undefined nor null
 exports.exists = arg => !(arg === undefined || arg === null);
