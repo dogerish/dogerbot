@@ -14,7 +14,7 @@ function upload_it()
 	# stop skipping this file now
 	sed -i "s:$file ::" "$tmpfile"
 	# conv to txt fmt
-	mkdir -p `echo "$file" | sed 's/\(.*\)\/.*/\1/'`
+	mkdir -p `echo "/tmp/$file" | sed 's:\(.*\)/.*:\1:'`
 	sed 's/\[^m]*m//g' "$file" > "/tmp/$file.txt"
 	# upload
 	echo "Uploading $file"
