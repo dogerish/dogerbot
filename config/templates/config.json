@@ -1,0 +1,15 @@
+{
+	"token": "bot token",
+	"prefix": "!do.",
+	"activity": "with leaves",
+	"activityOptions": { "type": "PLAYING" },
+	"rootusers": ["user id"],
+	"debug_guilds": ["server id used for debugging"],
+	"debug": false,
+	"LOG_CONFIG": {
+		"LOGDIR": "log",
+		"LOG": "dogerlog.less",
+		"ERR": "dogererr.less",
+		"DM": "dmlog.less"
+	}
+}

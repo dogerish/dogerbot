@@ -1,5 +1,5 @@
 # Note
- Files starting with `_` in this directory are templates. They should be copied to the name but without the leading `_`. (ie. `_a` -> `a`)
+ Files in the `template` directory are templates. just copy them up to the directory that contains this file and then edit those copies.
 
 # General Configuration File
  Copy the template file for `config.json` Note: You should **NEVER** share the token with ANYONE because it will give them full control over your bot.
