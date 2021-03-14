@@ -270,7 +270,7 @@ botcmds.addnew('error', null, (me, context, msg) => { excd.stderr("error command
 bot.on('ready', async () => { 
 	excd.stdout(`${bot.user.username} is ready for action!`); 
 	if (config.debug) { excd.stdout('</> Running in debug mode'); }
-	bot.user.setActivity(config.activity).catch(excd.stderr);
+	bot.user.setActivity(config.activity, config.activityOptions).catch(excd.stderr);
 	bot.users.fetch(config.rootusers[0]).then(user => bot.admin = user).catch(excd.stderr);
 });
 
