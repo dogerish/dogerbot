@@ -92,7 +92,7 @@ botcmds.addnew('laugh funny haha', null, function(me, context, msg)
 	];
 	return msg.reply(responses.random().replace(/{}/g, msg.pingargstr || msg.msg.author.username), context);
 });
-// reports a bug to me
+// reports a bug to admin
 botcmds.addnew('bugreport bug uhoh', null, function(me, context, msg)
 {
 	msg.reply(
@@ -100,7 +100,20 @@ botcmds.addnew('bugreport bug uhoh', null, function(me, context, msg)
 		content: `thx for ur feedback ${msg.author.username}. i appreciate it`,
 		files: ["https://i.ytimg.com/vi/vdJF4Mt4l1Q/maxresdefault.jpg"]
 	}, context);
-	return bot.admin.send(`${msg.author} (${msg.author.id}) gave a bug report:\n\`\`\`${msg.argstr}\`\`\``, msg.msg.attachments.array());
+	return bot.admin.send(
+		`${msg.author} (${msg.author.id}) gave a bug report:\n\`\`\`${msg.argstr}\`\`\``,
+		msg.msg.attachments.array()
+	);
+},
+null, false, 60);
+// sends a feature recommendation to admin
+botcmds.addnew("feature-recommendation feature-rec feat-rec rec fr", null, (me, context, msg) =>
+{
+	msg.reply("we'll see about that", context);
+	return bot.admin.send(
+		`${msg.author} (${msg.author.id}) recommends:\n\`\`\`${msg.argstr}\`\`\``,
+		msg.msg.attachments.array()
+	);
 },
 null, false, 60);
 // clears the cooldown for someone
