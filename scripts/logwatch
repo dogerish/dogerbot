@@ -17,15 +17,14 @@ function upload_it()
 	mkdir -p `echo "/tmp/$file" | sed 's:\(.*\)/.*:\1:'`
 	sed 's/\[^m]*m//g' "$file" > "/tmp/$file.txt"
 	# upload
-	echo "Uploading $file"
 	rclone copy "/tmp/$file.txt" "gdrive:$LOGDIR"
 }
 
-inotifywait -rme modify "$LOGDIR" --format "%w%f" | while read file
+(inotifywait -rme modify "$LOGDIR" --format "%w%f" | while read file
 do
 	if [[ `cat "$tmpfile"` != *"$file"* ]]
 	then
 		upload_it "$file" &
 		echo -n "$file " >> "$tmpfile"
 	fi
-done
+done) &
