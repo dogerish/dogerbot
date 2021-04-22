@@ -282,11 +282,8 @@ botcmds.addnew('error', null, (me, context, msg) => { excd.stderr("error command
 // gets picture from base/
 botcmds.addnew('getpic', null, async function(me, context, msg, name)
 {
-	name =
-		// remove all ../ so that it's trapped in base/
-		"base/" + name.replace(/\.\.\//g, '') +
-		// default to .jpg extension
-		(name.search(/\.[^\.]+$/) == -1) ? ".jpg" : "";
+	// remove all ../ so that it's trapped in base/ and default to .jpg extension
+	name = `base/${name.replace(/\.\.\//g, '')}${(name.search(/\.[^\.]+$/) == -1) ? ".jpg" : ""}`;
 
 	if (!fs.existsSync(name))
 	{
