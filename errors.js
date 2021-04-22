@@ -60,8 +60,9 @@ class Errors
 			case 'UNKNOWN_CMD': return formatexcd(`Unknown command${(special) ? `: \`${special}\`` : ''}`);
 			case 'DEBUG_MODE': return formatexcd("I am currently in debug mode!");
 			case 'ENOENT':
-				excd.stderr(`Failed to load file: probably missing manual page at path "${error.path}"`);
-				return formatexcd(`Failed to load file "${error.path}".`);
+				if (error.path.startsWith("manuals/"))
+					excd.stderr(`Failed to load file: probably missing manual page at path "${error.path}"`);
+				return formatexcd(`Failed to load file \`${error.path}\`.`);
 			case 'MESSAGE_TOO_LONG': return formatexcd('Message exceeded 2000 characters!');
 			case 'NO_COMMAND': return formatexcd("No command specified.");
 			case 'RESTRICTED': return formatexcd("This command is not allowed in this channel.");

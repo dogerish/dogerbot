@@ -279,6 +279,23 @@ function (me, context, msg)
 
 botcmds.addnew('error', null, (me, context, msg) => { excd.stderr("error command said: " + msg.argstr); return excd.cs[1]; });
 
+// gets picture from base/
+botcmds.addnew('getpic', null, async function(me, context, msg, name)
+{
+	// remove all ../ so that ur stuck in base/
+	name = name.replace(/\.\.\//g, '');
+	// default to .jpg extension
+	if (name.search(/\.[^\.]+$/) == -1) name += ".jpg";
+	fname = `base/${name}`;
+	if (!fs.existsSync(fname))
+	{
+		msg.error.asreply({ code: "ENOENT", path: fname });
+		return excd.cs[1];
+	}
+	msg.reply({ files: [fname] });
+	return excd.cs[0];
+});
+
 // when online
 bot.on('ready', async () => { 
 	excd.stdout(`${bot.user.username} is ready for action!`); 

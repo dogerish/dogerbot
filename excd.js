@@ -31,8 +31,8 @@ const excd =
 	stderr: function (error)
 	{
 		console.error.apply(null, [excd.time("\x1b[0;1;31") + error].concat(Array.from(arguments).slice(1)));
-		console.error(error);
-		console.error("\x1b[0m");
+		if (String(error) != error) console.error(error);
+		process.stderr.write("\x1b[0m");
 	},
 
 	// logs the error if it exists
