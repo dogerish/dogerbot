@@ -1,0 +1,6 @@
+Get the cover picture for the given map. Usage: `getpic <name>`
+Relative file paths are not supported, and if no file extension is given, it will default to jpg.
+Example:
+```
+getpic reissen
+```
