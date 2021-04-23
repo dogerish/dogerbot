@@ -1,5 +1,6 @@
 // message object for options, arguments, etc.
 
+const fs = require("fs");
 const excd = require("./excd.js");
 const config = require("./config/config.json");
 const basics = require("./basic-fns.js");
@@ -93,7 +94,13 @@ class Message
 	// reply to the message
 	reply(str)
 	{
-		if (str.length >= 2000) return this.error.asreply('MESSAGE_TOO_LONG');
+		// if it's too long then send it as a text file
+		if (types.sametype(str, String) && str.length >= 2000)
+		{
+			const f = "/tmp/message.txt";
+			fs.writeFileSync(f, str);
+			return this.msg.channel.send({ files: [f] });
+		}
 		return this.msg.channel.send(str).catch(excd.stderr);
 	}
 	// check the constructor of obj to see if it matches type

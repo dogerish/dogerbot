@@ -1,0 +1,3 @@
+Arguments:
+	**name**:
+		Name of the map's cover file. The extension defaults to .jpg and base/ will automatically be put in front of the name, but can be supplied anyway.

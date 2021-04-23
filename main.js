@@ -1,6 +1,7 @@
 // modules
 const sys = require('child_process');
 const fs = require('fs');
+const glob = require("glob");
 const Discord = require('discord.js');
 
 const excd = require("./excd.js");
@@ -280,11 +281,59 @@ function (me, context, msg)
 botcmds.addnew('error', null, (me, context, msg) => { excd.stderr("error command said: " + msg.argstr); return excd.cs[1]; });
 
 // gets picture from base/
-botcmds.addnew('getpic', null, async function(me, context, msg, name)
+botcmds.addnew('getpic', 
+[
+	[ "g s f glob search find", false, "Search for files matching glob/bash style file pattern" ],
+	[ "l list-all", false, "List all files. Equivalent to glob *" ],
+	[ "c columns", true, "Number of columns to show results in; defaults to 6" ]
+], async function(me, context, msg, name)
 {
-	// remove all ../ so that it's trapped in base/ and default to .jpg extension
-	name = `base/${name.replace(/\.\.\//g, '')}${(name.search(/\.[^\.]+$/) == -1) ? ".jpg" : ""}`;
+	const listall = msg.getopt('l').exists;
+	if (listall) name = '*';
+	// remove all ../ so that it's trapped in base/
+	name = name.replace(/\.\.\//g, '');
+	// don't add base/ to the beginning if it's already there
+	if (!name.startsWith("base/")) name = "base/" + name;
 
+	let cols = msg.getopt('c');
+	cols = cols.exists ? cols.value : 6;
+	if (listall || msg.getopt('g').exists)
+	{
+		// perform glob and send results
+		glob(name, null, (e, files) =>
+		{
+			excd.ifexists(e);
+			// holds the files in columns and keep track of the widest data piece
+			let columns = Array(cols);
+			for (let i = 0; i < cols; i++)
+				columns[i] = { data: [], width: 0 };
+			files.forEach((file, i) =>
+			{
+				let col = columns[i % cols];
+				col.data.push(file);
+				if (file.length >= col.width) col.width = file.length + 1;
+			});
+			// each row
+			let out = "";
+			for (let i = 0; i < columns[0].data.length; i++)
+			{
+				for (let col of columns)
+				{
+					if (basics.exists(col.data[i]))
+					{
+						let numspaces = col.width - col.data[i].length;
+						out += `${col.data[i]}${' '.repeat(numspaces)}`;
+					}
+				}
+				out += '\n';
+			}
+			msg.reply(out ? ((out.length < 2000) ? "```" + out + "```" : out) : "No results.");
+		});
+		return excd.cs[0];
+	}
+
+	// default to .jpg extension
+	if (name.search(/\.[^\.]+$/) == -1) name += ".jpg";
 	if (!fs.existsSync(name))
 	{
 		msg.error.asreply({ code: "ENOENT", path: name });
