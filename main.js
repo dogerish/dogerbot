@@ -343,6 +343,17 @@ botcmds.addnew('getpic',
 	return excd.cs[0];
 });
 
+// gets a stan pic
+botcmds.addnew("stanpic stan sp", null,
+async (me, context, msg) =>
+{
+	let file = "resources/stanpics.txt";
+	let count = (await uppers.findline(file))[0];
+	let n = Math.floor(Math.random() * count) + 1;
+	let line = (await uppers.findline(file, ln => ln == n))[1];
+	msg.reply(line);
+});
+
 // when online
 bot.on('ready', async () => { 
 	excd.stdout(`${bot.user.username} is ready for action!`); 
