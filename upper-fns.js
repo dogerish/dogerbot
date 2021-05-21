@@ -56,7 +56,8 @@ exports.findline = (filename, f = () => {}) =>
 				do
 				{
 					// prev is the first character of this line
-					prev = now + 1;
+					// only offset by 1 if now isn't 0
+					prev = now + (now != 0) * 1;
 					// find the end of this line
 					now = buffer.indexOf('\n', prev);
 					lineNumber++;
