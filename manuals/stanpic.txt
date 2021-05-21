@@ -1,0 +1,5 @@
+Sends a random picture of Stanlee. Usage: `stanpic`.
+Example:
+```
+stanpic
+```
