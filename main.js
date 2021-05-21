@@ -343,16 +343,41 @@ botcmds.addnew('getpic',
 	return excd.cs[0];
 });
 
-// gets a stan pic
-botcmds.addnew("stanpic stan sp", null,
-async (me, context, msg) =>
+// generates a cat command
+// cat: name of the cat
+// owner: user id of the owner (the only one who can add URLs)
+function genCatCmd(cat, owner)
 {
-	let file = "resources/stanpics.txt";
-	let count = (await uppers.findline(file))[0];
-	let n = Math.floor(Math.random() * count) + 1;
-	let line = (await uppers.findline(file, ln => ln == n))[1];
-	msg.reply(line);
-});
+	botcmds.addnew(`${cat}pic ${cat} ${cat[0]}p`,
+	[
+		["a add", false, `Add the attachment to the ${cat}pic list`]
+	],
+	async (me, context, msg) =>
+	{
+		let file = `resources/${cat}pics.txt`;
+		let count = (await uppers.findline(file))[0];
+		if (msg.getopt('a').exists)
+		{
+			if (msg.author.id != owner)
+				return msg.reply(msg.error.ferr(context, null, `You aren't the owner of ${cat}.`));
+			let urls = "";
+			// collect all args and attachments
+			for (let arg of msg.args) urls += `${arg}\n`;
+			for (let at of msg.msg.attachments) urls += `${at[1].url}\n`;
+			// no URLs found
+			if (!urls) return msg.reply(msg.error.ferr(null, context, "No attachments or arguments found."));
+			fs.appendFileSync(file, urls);
+			return msg.reply(`Added the following URLs\n\`\`\`${urls}\`\`\``);
+		}
+		let n = Math.floor(Math.random() * count) + 1;
+		let line = (await uppers.findline(file, ln => ln == n))[1];
+		return msg.reply(line);
+	});
+}
+
+// gets a stan or boris pic
+genCatCmd("stan", "160616449742864385");
+genCatCmd("boris", "222977034870063104");
 
 // when online
 bot.on('ready', async () => { 

@@ -1,0 +1,6 @@
+Sends a random picture of Boris. Usage: `stanpic [<options>]`.
+{options}
+Example:
+```
+borispic
+```

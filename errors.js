@@ -72,6 +72,12 @@ class Errors
 		}
 	} // end std error
 	
+	// formats an error for sending as a discord message
+	ferr(defcon, context, message)
+	{
+		context = this.evalcon(defcon, context);
+		return `:x: \`${context}\`: ${message}`;
+	}
 	// handles the error and turns it into a reply
 	asreply()
 	{
@@ -81,7 +87,7 @@ class Errors
 		if (err.code === 'ROOT_REQ') this.bot.admin.send(
 			`\`${this.msg.command}\` attempted by ${this.msg.author}`
 		).catch(excd.stderr);
-		err.value = this.msg.reply(`:x: \`${err.value.context}\`: ${err.value.string}`);
+		err.value = this.msg.reply(this.ferr(this.defcon, err.value.context, err.value.string));
 		return excd.cs[1];
 	}
 

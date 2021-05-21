@@ -1,4 +1,5 @@
-Sends a random picture of Stanley. Usage: `stanpic`.
+Sends a random picture of Stanley. Usage: `stanpic [<options>]`.
+{options}
 Example:
 ```
 stanpic
