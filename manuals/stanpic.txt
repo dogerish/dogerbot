@@ -1,4 +1,4 @@
-Sends a random picture of Stanlee. Usage: `stanpic`.
+Sends a random picture of Stanley. Usage: `stanpic`.
 Example:
 ```
 stanpic
