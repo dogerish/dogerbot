@@ -346,20 +346,29 @@ botcmds.addnew('getpic',
 // generates a cat command
 // cat: name of the cat
 // owner: user id of the owner (the only one who can add URLs)
-function genCatCmd(cat, owner)
+function genCatCmd(cat, owner, color)
 {
+	let file = `resources/${cat}pics.txt`;
+	let managers = [owner, ...config.rootusers];
 	botcmds.addnew(`${cat}pic ${cat} ${cat[0]}p`,
 	[
-		["a add", false, `Add the attachment to the ${cat}pic list`]
+		["a add", false, `Add the attachment to the ${cat}pic list`],
+		["d r del rm delete remove", true, `Remove the Nth URL from the list. Any number <= 0, or no argument will delete the last URL.`]
 	],
-	async (me, context, msg) =>
+	async (me, context, msg, n) =>
 	{
-		let file = `resources/${cat}pics.txt`;
 		let count = (await uppers.findline(file))[0];
+		// gets upset if the author isn't the cat's owner
+		// returns true if the author is the owner
+		function isowner()
+		{
+			if (!managers.includes(msg.author.id))
+				msg.reply(msg.error.ferr(context, null, `You aren't the owner of ${cat}.`));
+			else return true;
+		}
 		if (msg.getopt('a').exists)
 		{
-			if (msg.author.id != owner)
-				return msg.reply(msg.error.ferr(context, null, `You aren't the owner of ${cat}.`));
+			if (!isowner()) return excd.cs[1];
 			let urls = "";
 			// collect all args and attachments
 			for (let arg of msg.args) urls += `${arg}\n`;
@@ -369,15 +378,41 @@ function genCatCmd(cat, owner)
 			fs.appendFileSync(file, urls);
 			return msg.reply(`Added the following URLs\n\`\`\`${urls}\`\`\``);
 		}
-		let n = Math.floor(Math.random() * count) + 1;
-		let line = (await uppers.findline(file, ln => ln == n))[1];
-		return msg.reply(line);
+		const d = msg.getopt('d');
+		if (d.exists)
+		{
+			if (!isowner()) return excd.cs[1];
+			d.value = Number(d.value) || 0;
+			if (await uppers.delline(file, d.value))
+				return msg.reply(
+					(d.value > 0) ?
+					`Deleted URL #${d.value}` :
+					"Deleted last URL"
+				);
+			return msg.reply(`#${d.value} doesn't exist.`);
+		}
+		if (!n) n = Math.floor(Math.random() * count) + 1;
+		let line = (await uppers.findline(file, n));
+		if (line[2]) return msg.reply(`#${n} doesn't exist.`);
+		return msg.reply(
+			line[1] ?
+			{
+				embed:
+				{
+					title: `#${line[0]}`,
+					image: { url: line[1] },
+					color: color
+				}
+			} :
+			`#${line[0]} is empty`
+		);
 	});
 }
 
 // gets a stan or boris pic
-genCatCmd("stan", "160616449742864385");
-genCatCmd("boris", "222977034870063104");
+genCatCmd("stan", "160616449742864385", 0x0c6a66);
+genCatCmd("boris", "222977034870063104", 0x2030aa);
+genCatCmd("kali", "675811287296638987", 0x200080);
 
 // when online
 bot.on('ready', async () => { 

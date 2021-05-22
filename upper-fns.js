@@ -41,39 +41,62 @@ exports.getarray = arg =>
 	}
 };
 
-// finds the lines of a file and executes f(number) on each line
-// returns Promise([linenumber, line])
-// if f() returns true, findline will stop on that line, otherwise it'll read to EOF
-exports.findline = (filename, f = () => {}) =>
+// finds the index span of the nth line
+// returns [<line number>, <start>, <end>, <out of range>]
+// <out of range> will be true if it reached the end of the thing
+function linespan(thing, n)
+{
+	let ln = 0, prev = 0, now = 0, oor = false;
+	do
+	{
+		let uberprev = prev;
+		// prev is the first character of this line
+		// only offset by 1 if now isn't 0
+		prev = now + (now != 0) * 1;
+		// find the end of this line
+		now = thing.indexOf('\n', prev);
+		if (now == -1) prev = uberprev;
+		ln++;
+	}
+	while (ln != n && now != -1);
+	if (now == -1)
+	{
+		ln--;
+		now = thing.length;
+		oor = true;
+	}
+	return [ln, prev, now, oor]
+}
+// finds the lines of a file, or only n lines, and returns the linenumber, line, and whether or not it went out of range
+// <= 0 picks the last one
+// returns Promise([linenumber, line, oor])
+exports.findline = (filename, n) =>
 {
 	return new Promise((resolve, reject) =>
 	{
-		let lineNumber = 0, line = "";
+		let ln = 0, line = "", oor = false;
 		fs.createReadStream(filename)
 			.on("data", buffer =>
 			{
-				let prev = 0, now = 0;
-				do
-				{
-					// prev is the first character of this line
-					// only offset by 1 if now isn't 0
-					prev = now + (now != 0) * 1;
-					// find the end of this line
-					now = buffer.indexOf('\n', prev);
-					lineNumber++;
-				}
-				// end when f() returns true or no newline is found
-				while (!f(lineNumber) && now != -1);
-				if (now == -1)
-				{
-					// decrease to get rid of empty line
-					lineNumber--;
-					// cut to end of buffer
-					now = buffer.length;
-				}
-				line = buffer.toString("utf-8", prev, now);
+				let ls = linespan(buffer, n);
+				line = buffer.toString("utf-8", ls[1], ls[2]);
+				ln = ls[0];
+				oor = ls[3] && n > 0;
 			})
-			.on("end", () => resolve([lineNumber, line]))
+			.on("end", () => resolve([ln, line, oor]))
 			.on("error", reject);
 	});
+};
+
+// deletes the nth line (1-based)
+// <= 0 deletes the last line
+exports.delline = async (filename, n) =>
+{
+	let urls = fs.readFileSync(filename);
+	let ls = linespan(urls, n);
+	// if the end was reached and n is positive, n is out of range
+	if (ls[3] && n > 0) return false;
+	urls = urls.slice(0, ls[1]) + urls.slice(ls[2] + 1, urls.length);
+	fs.writeFileSync(filename, urls);
+	return true;
 };
