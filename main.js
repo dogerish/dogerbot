@@ -411,7 +411,7 @@ function genCatCmd(cat, owner, color)
 
 // gets a stan or boris pic
 genCatCmd("stan", "160616449742864385", 0x0c6a66);
-genCatCmd("boris", "222977034870063104", 0x2030aa);
+genCatCmd("boris", "222977034870063104", 0x78ba36);
 genCatCmd("kali", "675811287296638987", 0x200080);
 
 // when online
