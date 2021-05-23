@@ -394,8 +394,12 @@ function genCatCmd(cat, owner, color)
 		if (!n) n = Math.floor(Math.random() * count) + 1;
 		let line = (await uppers.findline(file, n));
 		if (line[2]) return msg.reply(`#${n} doesn't exist.`);
-		return msg.reply(
-			line[1] ?
+		let response;
+		// can't embed a video
+		if (["mp4", "mov"].includes(line[1].slice(-3)))
+			response = `**#${line[0]}**\n${line[1]}`;
+		else
+			response =
 			{
 				embed:
 				{
@@ -403,9 +407,8 @@ function genCatCmd(cat, owner, color)
 					image: { url: line[1] },
 					color: color
 				}
-			} :
-			`#${line[0]} is empty`
-		);
+			};
+		return msg.reply(line[1] ? response : `#${line[0]} is empty`);
 	});
 }
 
