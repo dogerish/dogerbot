@@ -1,0 +1,6 @@
+Sends a random picture of Kali. Usage: `kalipic [<options>]`.
+{options}
+Example:
+```
+kalipic
+```
