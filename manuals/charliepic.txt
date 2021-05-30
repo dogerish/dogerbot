@@ -1,0 +1,6 @@
+Sends a random picture of Charlie. Usage: `charliepic [<options>]`.
+{options}
+Example:
+```
+charliepic
+```

@@ -1,0 +1,6 @@
+Sends a random picture of Dory. Usage: `dorypic [<options>]`.
+{options}
+Example:
+```
+dorypic
+```

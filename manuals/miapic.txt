@@ -1,0 +1,6 @@
+Sends a random picture of Mia. Usage: `miapic [<options>]`.
+{options}
+Example:
+```
+miapic
+```

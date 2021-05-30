@@ -412,10 +412,17 @@ function genCatCmd(cat, owner, color)
 	});
 }
 
-// gets a stan or boris pic
-genCatCmd("stan", "160616449742864385", 0x0c6a66);
-genCatCmd("boris", "222977034870063104", 0x78ba36);
-genCatCmd("kali", "675811287296638987", 0x00a513);
+// noofy
+genCatCmd("stan",    "160616449742864385", 0x0c6a66);
+// wjp
+genCatCmd("boris",   "222977034870063104", 0x78ba36);
+// unlix
+genCatCmd("kali",    "675811287296638987", 0x00a513);
+// soup
+genCatCmd("dory",    "410416782025949195", 0x2471a3);
+genCatCmd("mia",     "410416782025949195", 0x2471a3);
+genCatCmd("mimi",    "410416782025949195", 0x2471a3);
+genCatCmd("charlie", "410416782025949195", 0x2471a3);
 
 // when online
 bot.on('ready', async () => { 
