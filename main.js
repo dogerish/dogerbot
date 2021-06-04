@@ -13,6 +13,9 @@ const config = require('./config/config.json');
 // bot users config
 const usersConfig = require('./config/users-config.json');
 
+// container for cat commands
+const catCmds = [];
+
 // shortcuts to permission codes
 const Perms = require("./perms.json");
 usersConfig.save = () =>
@@ -348,11 +351,13 @@ botcmds.addnew('getpic',
 // owner: user id of the owner (the only one who can add URLs)
 function genCatCmd(cat, owner, color)
 {
+	let cc = { file: `resources/${cat}pics.txt`, lines: [] };
+	catCmds.push(cc);
 	const listURLs = urls => "```\n" + urls.join('\n') + "\n```";
 	// array of lines
-	let lines = String(fs.readFileSync(`resources/${cat}pics.txt`)).split('\n');
+	cc.lines = String(fs.readFileSync(`resources/${cat}pics.txt`)).split('\n');
 	// remove blank line at end
-	lines.pop();
+	cc.lines.pop();
 	const managers = [owner, ...config.rootusers];
 	botcmds.addnew(`${cat}pic ${cat} ${cat[0]}p`,
 	[
@@ -392,20 +397,25 @@ function genCatCmd(cat, owner, color)
 					null, context,
 					response + "No valid attachments or arguments found."
 				));
-			lines.push(...urls);
-			return msg.reply(response + "Added the following URLs\n" + listURLs(urls));
+			cc.lines.push(...urls);
+			msg.reply(response + "Added the following URLs\n" + listURLs(urls));
 		}
 		if (removing)
 		{
 			d = Number(d.value || 0);
-			d += (d <= 0) * lines.length;
-			if (d <= 0 || d > lines.length) return msg.reply(`#${d} doesn't exist.`);
-			lines.splice(d - 1, 1);
-			return msg.reply(`Deleted URL #${d}`);
+			d += (d <= 0) * cc.lines.length;
+			if (d <= 0 || d > cc.lines.length) return msg.reply(`#${d} doesn't exist.`);
+			cc.lines.splice(d - 1, 1);
+			msg.reply(`Deleted URL #${d}`);
 		}
-		if (!n) n = Math.floor(Math.random() * lines.length);
-		else n = Number(n) - 1 + (n <= 0) * lines.length;
-		let line = lines[n++];
+		if (adding || removing)
+		{
+			fs.writeFile(cc.file, cc.lines.join('\n') + '\n', excd.ifexists);
+			return excd.cs[0];
+		}
+		if (!n) n = Math.floor(Math.random() * cc.lines.length);
+		else n = Number(n) - 1 + (n <= 0) * cc.lines.length;
+		let line = cc.lines[n++];
 		if (line == undefined) return msg.reply(`#${n} doesn't exist.`);
 		if (!line.length) return msg.reply(`#${n} is empty`);
 		msg.msg.channel.send(
