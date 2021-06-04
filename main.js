@@ -348,73 +348,79 @@ botcmds.addnew('getpic',
 // owner: user id of the owner (the only one who can add URLs)
 function genCatCmd(cat, owner, color)
 {
-	let file = `resources/${cat}pics.txt`;
-	let lines = String(fs.readFileSync(file));
-	lines = lines.split('\n');
-	debugger;
-	let managers = [owner, ...config.rootusers];
+	const listURLs = urls => "```\n" + urls.join('\n') + "\n```";
+	// array of lines
+	let lines = String(fs.readFileSync(`resources/${cat}pics.txt`)).split('\n');
+	// remove blank line at end
+	lines.pop();
+	const managers = [owner, ...config.rootusers];
 	botcmds.addnew(`${cat}pic ${cat} ${cat[0]}p`,
 	[
 		["a add", false, `Add the attachment to the ${cat}pic list`],
-		["d r del rm delete remove", true, `Remove the Nth URL from the list. Any number <= 0, or no argument will delete the last URL.`]
+		[
+			"d r del rm delete remove", true,
+			"Remove the Nth URL from the list. " +
+			"A number zero or below will be offset from the last picture by N amount."
+		]
 	],
 	async (me, context, msg, n) =>
 	{
-		let count = lines.length; // (await uppers.findline(file))[0];
-		// gets upset if the author isn't the cat's owner
-		// returns true if the author is the owner
-		function isowner()
+		let d = msg.getopt('d');
+		let adding = msg.getopt('a').exists, removing = d.exists;
+		if ((adding || removing) && !managers.includes(msg.author.id))
 		{
-			if (!managers.includes(msg.author.id))
-				msg.reply(msg.error.ferr(context, null, `You aren't the owner of ${cat}.`));
-			else return true;
+			msg.reply(msg.error.ferr(context, null, `You aren't the owner of ${cat}.`));
+			return excd.cs[1];
 		}
-		if (msg.getopt('a').exists)
+		if (adding)
 		{
-			if (!isowner()) return excd.cs[1];
-			let urls = "";
+			let urls = [];
 			// collect all args and attachments
-			for (let arg of msg.args) urls += `${arg}\n`;
-			for (let at of msg.msg.attachments) urls += `${at[1].url}\n`;
-			// no URLs found
-			if (!urls) return msg.reply(msg.error.ferr(null, context, "No attachments or arguments found."));
-			fs.appendFileSync(file, urls);
-			return msg.reply(`Added the following URLs\n\`\`\`${urls}\`\`\``);
+			let errors = [];
+			// only add URLs which start with http or https
+			for (let url of msg.args)
+				( ["http", "https"].some(scheme => url.startsWith(scheme)) ?
+					urls : errors
+				).push(url);
+			let response = (!errors.length) ? "" :
+				"These URLs don't start with http or https, and weren't added.\n" +
+				listURLs(errors) + '\n';
+			for (let at of msg.msg.attachments) urls.push(at[1].url);
+			// nothing found
+			if (!urls.length)
+				return msg.reply(msg.error.ferr(
+					null, context,
+					response + "No valid attachments or arguments found."
+				));
+			lines.push(...urls);
+			return msg.reply(response + "Added the following URLs\n" + listURLs(urls));
 		}
-		const d = msg.getopt('d');
-		if (d.exists)
+		if (removing)
 		{
-			if (!isowner()) return excd.cs[1];
-			d.value = Number(d.value) || 0;
-			if (await uppers.delline(file, d.value))
-				return msg.reply(
-					(d.value > 0) ?
-					`Deleted URL #${d.value}` :
-					"Deleted last URL"
-				);
-			return msg.reply(`#${d.value} doesn't exist.`);
+			d = Number(d.value || 0);
+			d += (d <= 0) * lines.length;
+			if (d <= 0 || d > lines.length) return msg.reply(`#${d} doesn't exist.`);
+			lines.splice(d - 1, 1);
+			return msg.reply(`Deleted URL #${d}`);
 		}
-		if (!n) n = Math.floor(Math.random() * count) + 1;
-		else n = Number(n);
-		// let line = (await uppers.findline(file, n));
-		// debugger;
-		if (n >= lines.length) return msg.reply(`#${n} doesn't exist.`);
-		let line = [n, lines[n]];
-		let response;
-		// can't embed a video
-		if (["mp4", "mov"].includes(line[1].slice(-3)))
-			response = `**#${line[0]}**\n${line[1]}`;
-		else
-			response =
-			{
-				embed:
+		if (!n) n = Math.floor(Math.random() * lines.length);
+		else n = Number(n) - 1 + (n <= 0) * lines.length;
+		let line = lines[n++];
+		if (line == undefined) return msg.reply(`#${n} doesn't exist.`);
+		if (!line.length) return msg.reply(`#${n} is empty`);
+		msg.msg.channel.send(
+			(["mp4", "mov"].includes(line.slice(-3))) ?
+			// can't embed a video
+				`**#${n}**\n${line}` :
 				{
-					title: `#${line[0]}`,
-					image: { url: line[1] },
-					color: color
+					embed:
+					{
+						title: `#${n}`,
+						image: { url: line },
+						color: color
+					}
 				}
-			};
-		return msg.reply(line[1] ? response : `#${line[0]} is empty`);
+		).catch(a => msg.reply(`#${n} is invalid.`));
 	});
 }
 
