@@ -349,6 +349,9 @@ botcmds.addnew('getpic',
 function genCatCmd(cat, owner, color)
 {
 	let file = `resources/${cat}pics.txt`;
+	let lines = String(fs.readFileSync(file));
+	lines = lines.split('\n');
+	debugger;
 	let managers = [owner, ...config.rootusers];
 	botcmds.addnew(`${cat}pic ${cat} ${cat[0]}p`,
 	[
@@ -357,7 +360,7 @@ function genCatCmd(cat, owner, color)
 	],
 	async (me, context, msg, n) =>
 	{
-		let count = (await uppers.findline(file))[0];
+		let count = lines.length; // (await uppers.findline(file))[0];
 		// gets upset if the author isn't the cat's owner
 		// returns true if the author is the owner
 		function isowner()
@@ -392,8 +395,11 @@ function genCatCmd(cat, owner, color)
 			return msg.reply(`#${d.value} doesn't exist.`);
 		}
 		if (!n) n = Math.floor(Math.random() * count) + 1;
-		let line = (await uppers.findline(file, n));
-		if (line[2]) return msg.reply(`#${n} doesn't exist.`);
+		else n = Number(n);
+		// let line = (await uppers.findline(file, n));
+		// debugger;
+		if (n >= lines.length) return msg.reply(`#${n} doesn't exist.`);
+		let line = [n, lines[n]];
 		let response;
 		// can't embed a video
 		if (["mp4", "mov"].includes(line[1].slice(-3)))
